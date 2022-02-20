@@ -8,9 +8,11 @@ from rest_framework.viewsets import ModelViewSet, GenericViewSet
 from rest_framework.views import APIView
 from rest_framework.generics import GenericAPIView
 from rest_framework.mixins import CreateModelMixin
+from rest_framework.filters import SearchFilter
 
+from app_student.filters import StudentFilterSet, RecordFilterSet
 from app_student.models import Student, Record, Hashtag, CategoryMeta
-from app_student.serializers import StudentSerializer, RecordSerializer, HashtagSerializer
+from app_student.serializers import StudentSerializer, RecordSerializer, HashtagSerializer, CategorySerializer
 
 User = get_user_model()
 
@@ -20,12 +22,15 @@ class StudentCRUDViewSet(ModelViewSet):
     queryset = Student.objects.all()
     serializer_class = StudentSerializer
     permission_classes = (AllowAny,)
+    filterset_class = StudentFilterSet
 
 
 class RecordCRUDView(ModelViewSet):
     queryset = Record.objects.all()
     permission_classes = (AllowAny,)
     serializer_class = RecordSerializer
+    filterset_class = RecordFilterSet
+
 
     def list(self, request, *args, **kwargs):
         queryset = self.filter_queryset(self.get_queryset())
@@ -101,6 +106,26 @@ class RecordCRUDView(ModelViewSet):
             tagSerializer.save()
 
 
-class GetCategoryMeta(APIView):
+class CategoryMetaAPIView(APIView):
     def get(self, request):
-        return Response(CategoryMeta.objects.all().values_list('category_name',flat=True),status=status.HTTP_200_OK)
+        return Response(CategoryMeta.objects.all().values('id','category_name'),status=status.HTTP_200_OK)
+
+    def post(self, request):
+        data = request.data
+        serializer = CategorySerializer(data=data)
+        serializer.is_valid(raise_exception=True)
+        data = serializer.validated_data
+        __ = CategoryMeta.objects.create(category_name=data.get('category_name'))
+        return Response(status=status.HTTP_201_CREATED)
+
+class DeleteCategoryMetaAPIView(APIView):
+
+    @transaction.atomic
+    def delete(self, request, pk):
+        pk = self.kwargs['pk']
+        target_category = CategoryMeta.objects.filter(id=pk)
+        if not target_category:
+            return Response(data={'msg':'해당하는 카테고리가 존재하지 않습니다.'},status=status.HTTP_400_BAD_REQUEST)
+        for category in target_category:
+            category.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
