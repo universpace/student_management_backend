@@ -21,6 +21,10 @@ from django.urls import path, include
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('api-auth/', include('rest_framework.urls'), name='rest-framework'),  # DRF WebAPI Login,Logout
+    path('admin/', admin.site.urls),
+    path('account/', include('dj_rest_auth.urls')),
+    path('account/', include('dj_rest_auth.registration.urls')),
+    path('account/', include('allauth.urls')),
     path('account/', include('app_user.urls')),
     path('student/', include('app_student.urls')),
 ]
