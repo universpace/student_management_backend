@@ -21,3 +21,6 @@ class RecordSerializer(ModelSerializer):
         model = Record
         fields = ['id','student','category','text']
         read_only_fields = ['id']
+
+class CategorySerializer(Serializer):
+    category_name = rest_framework.serializers.CharField(max_length=255)
